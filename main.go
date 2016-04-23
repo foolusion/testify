@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 )
 
 var config = struct {
@@ -29,15 +28,11 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	units := r.Form["unit"]
-	f, err := randomFloat("exp-123", units, 0, 100)
+	h, err := newHashedUnit("exp-123", units)
 	if err != nil {
-		http.Error(w, "couldn't hash units"+strings.Join(units, ","), http.StatusInternalServerError)
-		return
+		http.Error(w, "unable to hash units", http.StatusBadRequest)
 	}
-	i, err := randomInt("exp-123", units, 0, 100)
-	if err != nil {
-		http.Error(w, "couldn't hash units"+strings.Join(units, ","), http.StatusInternalServerError)
-		return
-	}
+	f := h.randomFloat(0, 100)
+	i := h.randomInt(0, 100)
 	fmt.Fprintf(w, "hello world: units: %v: %v, %v\n", units, f, i)
 }

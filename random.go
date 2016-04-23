@@ -9,30 +9,30 @@ import (
 
 const longScale = float64(0xFFFFFFFFFFFFFFF)
 
-func getHash(localSalt string, units []string) (int64, error) {
+type hashedUnit int64
+
+func newHashedUnit(localSalt string, units []string) (hashedUnit, error) {
 	key := fmt.Sprintf("%s.%s%s%s", localSalt, config.globalSalt, config.saltSeperator, strings.Join(units, "."))
 	hash := fmt.Sprintf("%x", sha1.Sum([]byte(key)))
-	return strconv.ParseInt(hash[:15], 16, 64)
+	i, err := strconv.ParseInt(hash[:15], 16, 64)
+	return hashedUnit(i), err
 }
 
-func getUniform(localSalt string, units []string, min, max float64) (float64, error) {
-	hash, err := getHash(localSalt, units)
-	if err != nil {
-		return 0, err
+func (h hashedUnit) getUniform(min, max float64) float64 {
+	return min + (max-min)*(float64(h)/longScale)
+}
+
+func (h hashedUnit) randomFloat(min, max float64) float64 {
+	return h.getUniform(min, max)
+}
+
+func (h hashedUnit) randomInt(min, max int64) int64 {
+	return min + int64(h)%(max-min+1)
+}
+
+func (h hashedUnit) bernoulliTrail(p float64) (bool, error) {
+	if p < 0 || p > 1 {
+		return false, fmt.Errorf("p must be between 0 and 1: %v", p)
 	}
-	return min + (max-min)*(float64(hash)/longScale), nil
+	return h.getUniform(0, 1) > p, nil
 }
-
-func randomFloat(localSalt string, units []string, min, max float64) (float64, error) {
-	return getUniform(localSalt, units, min, max)
-}
-
-func randomInt(localSalt string, units []string, min, max int64) (int64, error) {
-	hash, err := getHash(localSalt, units)
-	if err != nil {
-		return 0, err
-	}
-	return min + hash%(max-min+1), nil
-}
-
-func bernoulliTrail(p float64) (int64, error)
