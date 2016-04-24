@@ -30,9 +30,16 @@ func (h hashedUnit) randomInt(min, max int64) int64 {
 	return min + int64(h)%(max-min+1)
 }
 
-func (h hashedUnit) bernoulliTrail(p float64) (bool, error) {
+func (h hashedUnit) bernoulliTrial(p float64) (bool, error) {
 	if p < 0 || p > 1 {
 		return false, fmt.Errorf("p must be between 0 and 1: %v", p)
 	}
 	return h.getUniform(0, 1) > p, nil
+}
+
+func (h hashedUnit) uniformChoice(choices []string) string {
+	if len(choices) == 0 {
+		return ""
+	}
+	return choices[int(h)%len(choices)]
 }

@@ -28,11 +28,13 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	units := r.Form["unit"]
-	h, err := newHashedUnit("exp-123", units)
+	h1, err := newHashedUnit("exp-123", units)
+	h2, err := newHashedUnit("exp-456", units)
 	if err != nil {
 		http.Error(w, "unable to hash units", http.StatusBadRequest)
 	}
-	f := h.randomFloat(0, 100)
-	i := h.randomInt(0, 100)
-	fmt.Fprintf(w, "hello world: units: %v: %v, %v\n", units, f, i)
+	uc1 := h1.uniformChoice([]string{"red", "blue", "green"})
+	uc2 := h2.uniformChoice([]string{"red", "blue", "green"})
+	fmt.Fprintf(w, "exp-123: units=%v, params=%v\n", units, uc1)
+	fmt.Fprintf(w, "exp-456: units=%v, params=%v\n", units, uc2)
 }
