@@ -43,3 +43,22 @@ func (h hashedUnit) uniformChoice(choices []string) string {
 	}
 	return choices[int(h)%len(choices)]
 }
+
+func (h hashedUnit) weightedChoice(choices []string, weights []float64) (string, error) {
+	if len(choices) != len(weights) {
+		return "", fmt.Errorf("len(choices) != len(weights): %v != %v", len(choices), len(weights))
+	}
+	selection := make([]float64, len(weights))
+	cumSum := 0.0
+	for i, v := range weights {
+		cumSum += v
+		selection[i] = cumSum
+	}
+	choice := h.getUniform(0, cumSum)
+	for i, v := range selection {
+		if v > choice {
+			return choices[i], nil
+		}
+	}
+	return "", fmt.Errorf("weightedChoice: wtf: shouldn't be here")
+}
