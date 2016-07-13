@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -11,8 +14,27 @@ const longScale = float64(0xFFFFFFFFFFFFFFF)
 
 type hashedUnit int64
 
-func newHashedUnit(localSalt string, units []string) (hashedUnit, error) {
-	key := fmt.Sprintf("%s.%s%s%s", localSalt, config.globalSalt, config.saltSeperator, strings.Join(units, "."))
+func mapJoin(vals url.Values, sep, eq string) string {
+	list := make([]string, 0, len(vals))
+	for k := range vals {
+		list = append(list, k)
+	}
+	sort.Strings(list)
+
+	var buf bytes.Buffer
+	for i, k := range list {
+		buf.WriteString(k)
+		buf.WriteString(eq)
+		buf.WriteString(strings.Join(vals[k], ","))
+		if i < len(list)-1 {
+			buf.WriteString(sep)
+		}
+	}
+	return buf.String()
+}
+
+func newHashedUnit(localSalt string, units url.Values) (hashedUnit, error) {
+	key := fmt.Sprintf("%s.%s%s%s", localSalt, config.globalSalt, config.saltSeperator, mapJoin(units, ":", "="))
 	hash := fmt.Sprintf("%x", sha1.Sum([]byte(key)))
 	i, err := strconv.ParseInt(hash[:15], 16, 64)
 	return hashedUnit(i), err

@@ -2,8 +2,40 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 )
+
+func BenchmarkMapJoin(b *testing.B) {
+	vals := url.Values(map[string][]string{
+		"c": []string{"1", "2"},
+	})
+	for i := 0; i < b.N; i++ {
+		mapJoin(vals, ":", "=")
+	}
+}
+
+func TestMapJoin(t *testing.T) {
+	tests := []struct {
+		in   url.Values
+		want string
+	}{
+		{
+			in:   url.Values(map[string][]string{"c": []string{"1", "2"}, "b": []string{"3", "4"}, "a": []string{"5", "6"}}),
+			want: "a=5,6:b=3,4:c=1,2",
+		},
+		{
+			in:   url.Values(map[string][]string{"userid": []string{"123", "456"}, "test": []string{"poop"}}),
+			want: "test=poop:userid=123,456",
+		},
+	}
+	for _, v := range tests {
+		out := mapJoin(v.in, ":", "=")
+		if out != v.want {
+			t.Errorf("got mapJoin(%v, %q, %q) = %v want %v", v.in, ":", "=", out, v.want)
+		}
+	}
+}
 
 func TestGetUniform(t *testing.T) {
 	tests := []struct {
